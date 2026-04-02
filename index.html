@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VeriPass Planetary Edition — 1B DPP Architecture | Lattice Ledger Labs</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#060A12;--ink2:#0D1422;--ink3:#162034;
+  --ibm:#0F62FE;--ibm2:#4589FF;--ibm3:#A6C8FF;
+  --gold:#F1C21B;--green:#24A148;--green2:#42BE65;
+  --teal:#009D9A;--red:#DA1E28;--coral:#FF832B;
+  --cream:#F4F4F4;--mist:#C1C7CD;--slate:#697077;--white:#FFF;
+  --r:10px;--r2:5px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--ink);color:var(--cream);font-family:'Syne',sans-serif;font-weight:400;line-height:1.65;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(15,98,254,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(15,98,254,0.025) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;justify-content:space-between;align-items:center;padding:13px 48px;background:rgba(6,10,18,0.96);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,131,43,0.2)}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-mark{width:32px;height:32px;background:var(--coral);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:500;color:white}
+.nav-text{font-family:'IBM Plex Mono',monospace;font-size:0.82rem;font-weight:500;color:var(--cream);letter-spacing:.04em}
+.nav-text span{color:var(--coral)}
+.nav-links{display:flex;gap:24px;align-items:center}
+.nav-links a{font-size:0.72rem;font-weight:500;letter-spacing:.06em;color:var(--mist);text-decoration:none;text-transform:uppercase;transition:color .2s}
+.nav-links a:hover{color:var(--coral)}
+.nav-badge{background:var(--coral);color:white;padding:5px 14px;border-radius:var(--r2);font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:500;letter-spacing:.04em}
+
+/* TICKER */
+.ticker{background:var(--coral);overflow:hidden;padding:9px 0;white-space:nowrap;position:relative;z-index:1}
+.ticker-inner{display:inline-flex;animation:tick 40s linear infinite}
+.ticker-item{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:500;color:rgba(255,255,255,.9);letter-spacing:.07em;padding:0 36px}
+.ticker-sep{color:rgba(255,255,255,.35)}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* LAYOUT */
+section{position:relative;z-index:1;padding:80px 48px;max-width:1280px;margin:0 auto}
+.full{max-width:none;padding-left:48px;padding-right:48px}
+.inner{max-width:1280px;margin:0 auto;padding:72px 48px}
+.tag{display:inline-flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:0.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--coral);margin-bottom:16px}
+.tag::before{content:'';width:20px;height:1px;background:var(--coral)}
+h1,h2,h3{font-family:'Syne',sans-serif;font-weight:700;line-height:1.1}
+h1{font-size:clamp(2.4rem,5vw,4.4rem);letter-spacing:-.02em}
+h2{font-size:clamp(1.8rem,3vw,2.8rem);letter-spacing:-.01em}
+h3{font-size:1.1rem}
+.coral{color:var(--coral)}
+.ibm{color:var(--ibm2)}
+.italic{font-family:'Lora',serif;font-style:italic}
+.mono{font-family:'IBM Plex Mono',monospace}
+
+/* HERO */
+#hero{min-height:100vh;display:flex;align-items:center;padding-top:100px;max-width:none;padding-left:48px;padding-right:48px}
+.hero-inner{max-width:1280px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
+.hero-ver{display:inline-flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:0.68rem;letter-spacing:.1em;background:rgba(255,131,43,.12);border:1px solid rgba(255,131,43,.3);border-radius:20px;padding:5px 14px;color:var(--coral);margin-bottom:24px}
+.hero-ver::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--coral)}
+.hero-sub{font-size:1rem;color:var(--mist);max-width:560px;margin-bottom:36px;line-height:1.75}
+.hero-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:48px}
+.pill{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:.08em;padding:4px 11px;border-radius:20px;text-transform:uppercase}
+.pill-c{background:rgba(255,131,43,.15);border:1px solid rgba(255,131,43,.3);color:var(--coral)}
+.pill-b{background:rgba(15,98,254,.15);border:1px solid rgba(15,98,254,.3);color:var(--ibm3)}
+.pill-g{background:rgba(36,161,72,.15);border:1px solid rgba(66,190,101,.3);color:var(--green2)}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,131,43,.12);border-radius:var(--r);overflow:hidden}
+.kpi{background:var(--ink2);padding:18px 14px}
+.kpi-val{font-size:1.8rem;font-weight:700;color:var(--coral);line-height:1;font-family:'IBM Plex Mono',monospace}
+.kpi-label{font-size:0.68rem;color:var(--slate);margin-top:5px;text-transform:uppercase;letter-spacing:.07em}
+
+/* RIGHT PANEL — volume cards */
+.volume-panel{display:flex;flex-direction:column;gap:12px;padding-top:24px}
+.vol-card{background:var(--ink2);border:1px solid rgba(255,131,43,.2);border-radius:var(--r);padding:18px;position:relative;overflow:hidden}
+.vol-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%}
+.vol-card.active::before{background:var(--coral)}
+.vol-card.passive::before{background:var(--ibm2)}
+.vol-card.ha::before{background:var(--green2)}
+.vc-label{font-family:'IBM Plex Mono',monospace;font-size:0.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-bottom:8px}
+.vc-vals{display:flex;align-items:baseline;gap:10px}
+.vc-main{font-size:1.4rem;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.vc-main.c{color:var(--coral)}.vc-main.b{color:var(--ibm2)}.vc-main.g{color:var(--green2)}
+.vc-sub{font-size:0.72rem;color:var(--slate)}
+.vc-desc{font-size:0.75rem;color:var(--mist);margin-top:6px;line-height:1.5}
+
+/* WHATSAPP SECTION */
+#whatsapp{background:var(--ink2);border-top:1px solid rgba(255,131,43,.1);border-bottom:1px solid rgba(255,131,43,.1)}
+.wa-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:48px}
+.wa-card{background:var(--ink);border:1px solid rgba(255,255,255,.07);border-radius:var(--r);padding:22px}
+.wa-card.highlight{border-color:rgba(255,131,43,.3)}
+.wa-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.wa-icon{width:36px;height:36px;border-radius:8px;background:rgba(255,131,43,.1);border:1px solid rgba(255,131,43,.2);display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-family:'IBM Plex Mono',monospace;color:var(--coral);flex-shrink:0}
+.wa-title{font-size:.9rem;font-weight:600;color:var(--cream)}
+.wa-role{font-size:.7rem;color:var(--slate);margin-top:2px}
+.wa-body{font-size:.76rem;color:var(--mist);line-height:1.6}
+.wa-chip{display:inline-block;margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:.58rem;padding:3px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:.06em}
+.wc-r{background:rgba(255,131,43,.12);color:var(--coral);border:.5px solid rgba(255,131,43,.25)}
+.wc-b{background:rgba(15,98,254,.12);color:var(--ibm3);border:.5px solid rgba(15,98,254,.25)}
+.wc-g{background:rgba(36,161,72,.12);color:var(--green2);border:.5px solid rgba(66,190,101,.25)}
+.wa-workaround{background:rgba(255,131,43,.06);border:1px solid rgba(255,131,43,.2);border-radius:var(--r);padding:20px;margin-top:20px}
+.waw-title{font-size:.82rem;font-weight:600;color:var(--coral);margin-bottom:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em}
+.waw-body{font-size:.76rem;color:var(--mist);line-height:1.65}
+
+/* ARCH LAYERS */
+#arch{background:var(--ink)}
+.layers-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:rgba(255,131,43,.07);border-radius:var(--r);overflow:hidden;margin-top:44px}
+.layer{background:var(--ink2);padding:24px 20px;transition:background .3s}
+.layer:hover{background:var(--ink3)}
+.layer-num{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--coral);opacity:.6;margin-bottom:12px;letter-spacing:.1em}
+.layer-icon-box{width:38px;height:38px;border-radius:8px;background:rgba(255,131,43,.08);border:1px solid rgba(255,131,43,.18);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:.9rem;color:var(--coral);margin-bottom:12px}
+.layer h3{font-size:.9rem;margin-bottom:7px;color:var(--cream)}
+.layer p{font-size:.74rem;color:var(--slate);line-height:1.6}
+.layer-tag{display:inline-block;margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.07em;border-radius:3px;padding:2px 7px;text-transform:uppercase}
+.lt-ibm{background:rgba(15,98,254,.12);border:.5px solid rgba(15,98,254,.25);color:var(--ibm3)}
+.lt-hl {background:rgba(0,157,154,.12);border:.5px solid rgba(0,157,154,.25);color:#3DDBD9}
+.lt-new{background:rgba(255,131,43,.12);border:.5px solid rgba(255,131,43,.25);color:var(--coral)}
+.lt-ok {background:rgba(105,112,119,.15);border:.5px solid rgba(105,112,119,.3);color:var(--mist)}
+.lt-kafka{background:rgba(241,194,27,.12);border:.5px solid rgba(241,194,27,.3);color:var(--gold)}
+.lt-changed{background:rgba(218,30,40,.12);border:.5px solid rgba(218,30,40,.25);color:#FF8389}
+
+/* STACK TABLE */
+#stack-table{background:var(--ink2);border-top:1px solid rgba(255,131,43,.1)}
+.tbl-wrap{border:1px solid rgba(255,131,43,.15);border-radius:var(--r);overflow:hidden;margin-top:36px}
+.tbl-h{display:grid;grid-template-columns:170px 1fr 100px 90px;padding:9px 16px;background:rgba(255,131,43,.08);border-bottom:1px solid rgba(255,131,43,.12);font-family:'IBM Plex Mono',monospace;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);gap:8px}
+.tbl-r{display:grid;grid-template-columns:170px 1fr 100px 90px;padding:11px 16px;border-bottom:.5px solid rgba(255,255,255,.04);font-size:.78rem;align-items:start;gap:8px;transition:background .15s}
+.tbl-r:last-child{border-bottom:none}
+.tbl-r:hover{background:rgba(255,131,43,.04)}
+.tbl-r:nth-child(odd){background:rgba(255,255,255,.015)}
+.tbl-r:nth-child(odd):hover{background:rgba(255,131,43,.04)}
+.tc{font-weight:600;color:var(--cream);font-size:.8rem}
+.ts{font-size:.68rem;color:var(--slate);margin-top:2px}
+.tw{font-size:.72rem;color:var(--mist);line-height:1.5}
+.tv{font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:500}
+.tvg{color:var(--green2)}.tvc{color:var(--coral)}.tva{color:var(--gold)}
+.chip{font-family:'IBM Plex Mono',monospace;font-size:.58rem;font-weight:500;padding:3px 7px;border-radius:3px;display:inline-block}
+.ci{background:rgba(15,98,254,.18);color:var(--ibm3);border:.5px solid rgba(15,98,254,.3)}
+.ch{background:rgba(0,157,154,.15);color:#3DDBD9;border:.5px solid rgba(0,157,154,.3)}
+.ck{background:rgba(241,194,27,.15);color:var(--gold);border:.5px solid rgba(241,194,27,.3)}
+.cn{background:rgba(255,131,43,.15);color:var(--coral);border:.5px solid rgba(255,131,43,.3)}
+.co{background:rgba(105,112,119,.15);color:var(--mist);border:.5px solid rgba(105,112,119,.3)}
+.cg{background:rgba(36,161,72,.15);color:var(--green2);border:.5px solid rgba(66,190,101,.3)}
+
+/* VOLUME METRICS */
+#volume{background:var(--ink)}
+.vm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:44px}
+.vm-card{background:var(--ink2);border:1px solid rgba(255,131,43,.15);border-radius:var(--r);padding:22px;transition:border-color .3s}
+.vm-card:hover{border-color:rgba(255,131,43,.35)}
+.vm-layer{font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.1em;color:var(--coral);text-transform:uppercase;margin-bottom:8px}
+.vm-val{font-size:1.6rem;font-weight:700;color:var(--cream);font-family:'IBM Plex Mono',monospace;line-height:1}
+.vm-unit{font-size:.7rem;color:var(--slate);margin-top:4px}
+.vm-calc{font-size:.7rem;color:var(--mist);margin-top:10px;line-height:1.5;border-top:.5px solid rgba(255,255,255,.06);padding-top:8px}
+
+/* COST */
+#cost{background:var(--ink2);border-top:1px solid rgba(255,131,43,.1)}
+.cost-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:44px}
+.cost-panel{background:var(--ink);border:1px solid rgba(255,131,43,.15);border-radius:var(--r);padding:24px}
+.cp-title{font-family:'IBM Plex Mono',monospace;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--coral);margin-bottom:18px}
+.cr{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:.5px solid rgba(255,255,255,.05);font-size:.76rem}
+.cr:last-child{border-bottom:none}
+.cr-name{color:var(--mist)}
+.cr-bar{flex:1;margin:0 12px;height:4px;background:rgba(255,255,255,.06);border-radius:2px}
+.cr-fill{height:4px;border-radius:2px;background:var(--coral)}
+.cr-val{font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:500;white-space:nowrap}
+.cost-total{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:rgba(255,131,43,.08);border:1px solid rgba(255,131,43,.2);border-radius:var(--r2);margin-top:14px}
+.ct-label{font-size:.82rem;font-weight:600;color:var(--cream)}
+.ct-sub{font-size:.68rem;color:var(--slate);margin-top:2px}
+.ct-val{font-family:'IBM Plex Mono',monospace;font-size:2rem;font-weight:500;color:var(--coral)}
+
+/* MIGRATION */
+#migration{background:var(--ink)}
+.mig-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,131,43,.08);border-radius:var(--r);overflow:hidden;margin-top:44px}
+.mig-col{background:var(--ink2);padding:0}
+.mig-hdr{padding:18px 20px;border-bottom:.5px solid rgba(255,131,43,.1)}
+.mig-phase{font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px}
+.mig-title{font-size:.95rem;font-weight:700;color:var(--cream);margin-bottom:4px}
+.mig-period{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--slate)}
+.mig-kpis{display:flex;gap:12px;margin-top:10px}
+.mk{}.mk-v{font-family:'IBM Plex Mono',monospace;font-size:1rem;font-weight:500;line-height:1}.mk-l{font-size:.58rem;color:var(--slate);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.mig-body{padding:16px 20px}
+.mig-section-label{font-family:'IBM Plex Mono',monospace;font-size:.56rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;margin-top:10px}
+.mig-section-label:first-child{margin-top:0}
+.mig-items{list-style:none}
+.mig-item{font-size:.72rem;color:var(--mist);padding:3px 0 3px 12px;position:relative;border-bottom:.5px solid rgba(255,255,255,.04);line-height:1.4}
+.mig-item:last-child{border-bottom:none}
+.mig-item::before{content:'›';position:absolute;left:0;color:var(--slate)}
+.mig-footer{padding:12px 20px;border-top:.5px solid rgba(255,131,43,.08)}
+.mig-ibm-badge{font-family:'IBM Plex Mono',monospace;font-size:.58rem;padding:4px 9px;border-radius:3px;display:inline-block}
+
+/* NOTE */
+.note{background:rgba(255,131,43,.06);border-radius:7px;padding:11px 14px;font-size:.75rem;color:var(--mist);line-height:1.6;border:.5px solid rgba(255,131,43,.2);margin-bottom:12px}
+.note strong{color:var(--cream);font-weight:500}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-d1{transition-delay:.1s}.reveal-d2{transition-delay:.2s}.reveal-d3{transition-delay:.3s}
+
+/* FOOTER */
+footer{border-top:1px solid rgba(255,131,43,.12);padding:38px 48px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;background:var(--ink2);position:relative;z-index:1}
+.fb{font-family:'IBM Plex Mono',monospace;font-size:.8rem;font-weight:500;color:var(--coral)}
+.fb span{color:var(--mist)}
+.fl a{font-size:.7rem;color:var(--slate);text-decoration:none;font-family:'IBM Plex Mono',monospace;transition:color .2s;margin-left:20px}
+.fl a:hover{color:var(--coral)}
+.fr{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--slate);opacity:.6}
+
+@media(max-width:960px){
+  nav{padding:12px 20px}section,.full,.inner{padding:56px 20px}
+  #hero{padding-left:20px;padding-right:20px;padding-top:100px}
+  footer{padding:30px 20px}
+  .hero-inner,.wa-grid,.cost-grid{grid-template-columns:1fr;gap:32px}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .layers-grid{grid-template-columns:1fr 1fr}
+  .vm-grid{grid-template-columns:1fr 1fr}
+  .mig-strip{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  h1{font-size:2rem}.kpi-grid{grid-template-columns:1fr 1fr}
+  .layers-grid,.vm-grid{grid-template-columns:1fr}
+  .tbl-h,.tbl-r{grid-template-columns:140px 1fr}
+  .tbl-h>*:nth-child(3),.tbl-h>*:nth-child(4),.tbl-r>*:nth-child(3),.tbl-r>*:nth-child(4){display:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-mark">VP</div>
+    <div class="nav-text">Veri<span>Pass</span> Planetary</div>
+  </a>
+  <div class="nav-links">
+    <a href="#whatsapp">WhatsApp</a>
+    <a href="#arch">Architecture</a>
+    <a href="#volume">Volume</a>
+    <a href="#cost">Cost</a>
+    <a href="#migration">Migration</a>
+    <span class="nav-badge">~1B DPP/mo</span>
+  </div>
+</nav>
+
+<div class="ticker" style="margin-top:56px">
+  <div class="ticker-inner">
+    <span class="ticker-item">VeriPass Planetary Edition <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">~960M DPPs / month sustained <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">32-shard Hyperledger Besu L1 + Optimistic Rollup L2 <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">IBM watsonx.ai Software Edition · 500× H100 GPU <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">WhatsApp RETAINED · Regional edge brokers <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">Apache Kafka global event mesh · EKS Kubernetes <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">Apache Cassandra global ring · Weaviate vector cluster <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">Plonky2 recursive STARKs · 20K proofs replace 350M <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">CIRPASS Authorised Registration Node <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">₹3.8 / DPP at planetary scale <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">IBM Partner Plus Gold → Platinum pathway <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">6 AWS regions · Active-active global deployment <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">VeriPass Planetary Edition <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">~960M DPPs / month sustained <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">32-shard Hyperledger Besu L1 + Optimistic Rollup L2 <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">IBM watsonx.ai Software Edition · 500× H100 GPU <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">WhatsApp RETAINED · Regional edge brokers <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">Apache Kafka global event mesh · EKS Kubernetes <span class="ticker-sep">///</span></span>
+  </div>
+</div>
+
+<!-- HERO -->
+<section id="hero" class="full">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-ver">VeriPass Planetary Edition — Architecture v4.0</div>
+      <h1>Global EU-DPP<br>at <span class="coral">planetary scale</span><br>~1 Billion/month</h1>
+      <p class="hero-sub">
+        A ground-up planetary redesign of VeriPass — built on the v3.0 foundation —
+        incorporating <strong>32-shard Hyperledger Besu + Optimistic Rollup L2</strong>,
+        <strong>IBM watsonx.ai Software Edition</strong> on a 500-GPU cluster,
+        Apache Kafka global event mesh, Plonky2 recursive STARKs,
+        and a <strong>WhatsApp-retained regional edge broker</strong> architecture.
+        Lattice Ledger Labs as <strong>CIRPASS Authorised Registration Node</strong>.
+      </p>
+      <div class="hero-pills">
+        <span class="pill pill-c">~960M DPPs/month</span>
+        <span class="pill pill-b">IBM Platinum tier pathway</span>
+        <span class="pill pill-g">WhatsApp retained</span>
+        <span class="pill pill-c">6 AWS regions</span>
+        <span class="pill pill-b">₹3.8/DPP at scale</span>
+        <span class="pill pill-g">CIRPASS ARN</span>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-val">~960M</div><div class="kpi-label">DPPs / month</div></div>
+        <div class="kpi"><div class="kpi-val">5,500</div><div class="kpi-label">DPPs / second (sustained)</div></div>
+        <div class="kpi"><div class="kpi-val">₹3.8</div><div class="kpi-label">Cost / DPP</div></div>
+        <div class="kpi"><div class="kpi-val">6</div><div class="kpi-label">AWS regions active-active</div></div>
+      </div>
+    </div>
+    <div class="volume-panel reveal">
+      <div class="vol-card active">
+        <div class="vc-label">Planetary design ceiling</div>
+        <div class="vc-vals"><span class="vc-main c">~960M</span><span class="vc-sub">DPPs / month</span></div>
+        <div class="vc-desc">32-shard Besu L1 × Optimistic Rollup L2 (10,000× compression) × state channels. Effective throughput limited by global Kafka ingestion bandwidth, not blockchain consensus.</div>
+      </div>
+      <div class="vol-card passive">
+        <div class="vc-label">Sustained throughput (24×7)</div>
+        <div class="vc-vals"><span class="vc-main b">~5,500</span><span class="vc-sub">DPPs / second</span></div>
+        <div class="vc-desc">960M ÷ (30 days × 86,400 sec) = 370/sec average. Peak 16-hr window = 5,500/sec. AI inference cluster handles 333,000/sec — 60× peak headroom.</div>
+      </div>
+      <div class="vol-card ha">
+        <div class="vc-label">WhatsApp intake capacity</div>
+        <div class="vc-vals"><span class="vc-main g">~72M</span><span class="vc-sub">DPPs / month via WA</span></div>
+        <div class="vc-desc">6 regional WhatsApp edge brokers × 12M/month each. SME channel retained globally. ERP/IoT/API handles remaining ~888M at source.</div>
+      </div>
+      <div class="vol-card active">
+        <div class="vc-label">Blockchain settlement (with L2)</div>
+        <div class="vc-vals"><span class="vc-main c">19,200</span><span class="vc-sub">L1 tx/sec effective</span></div>
+        <div class="vc-desc">32 Besu shards × 600 tx/sec each. L2 Rollup batches 10,000 DPPs per L1 tx → effectively unlimited DPP throughput at blockchain layer.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHATSAPP RETAINED + WORKAROUND -->
+<div id="whatsapp">
+  <div class="inner">
+    <div class="tag">WhatsApp strategy</div>
+    <h2>WhatsApp retained — <span class="italic coral">regional edge broker</span> architecture</h2>
+    <div class="note">
+      <strong>The multi-region challenge:</strong> At ~1B DPPs/month covering 6 global regions, a single WhatsApp Business API number and webhook endpoint cannot serve factories in Bangladesh, Vietnam, Turkey, and India simultaneously. Regional data sovereignty laws (India DPDP Act, GDPR, PDPA) also prohibit routing one country's factory data through another country's server. The solution is a <strong>WhatsApp Regional Edge Broker (WREB)</strong> — one per region, each a fully autonomous intake node.
+    </div>
+    <div class="wa-grid">
+      <div class="wa-card highlight">
+        <div class="wa-head">
+          <div class="wa-icon">W</div>
+          <div><div class="wa-title">WhatsApp Regional Edge Broker (WREB)</div><div class="wa-role">One per region — fully autonomous intake node</div></div>
+        </div>
+        <div class="wa-body">Each of the 6 global regions gets a dedicated WREB: a containerised microservice (EKS pod, 8 replicas) that owns a region-specific WhatsApp Business number, maintains a local Kafka topic for ingestion, and processes factory documents entirely within its regional boundary before forwarding structured JSON to the global DPP pipeline. The WREB never forwards raw documents cross-region — only extracted, schema-validated JSON fields.</div>
+        <span class="wa-chip wc-r">6 regional numbers</span>
+        <span class="wa-chip wc-g">Data-sovereign</span>
+      </div>
+      <div class="wa-card">
+        <div class="wa-head">
+          <div class="wa-icon">R</div>
+          <div><div class="wa-title">Regional number routing</div><div class="wa-role">Factory dials the correct regional number</div></div>
+        </div>
+        <div class="wa-body">Each exporter's WhatsApp number is pre-configured at onboarding to their regional WREB number. India factories → +91 VeriPass India number. Bangladesh → +880 VeriPass BD number. Vietnam → +84 VeriPass VN number. Turkey → +90 VeriPass TR number. LLL maintains a GS1-registered DPP submission portal that auto-routes WhatsApp Business API calls to the correct regional WREB via Meta's Cloud API multi-number support.</div>
+        <span class="wa-chip wc-b">Auto-routed at onboarding</span>
+      </div>
+      <div class="wa-card">
+        <div class="wa-head">
+          <div class="wa-icon">S</div>
+          <div><div class="wa-title">SME vs enterprise traffic split</div><div class="wa-role">WhatsApp for SMEs · API/ERP/IoT for large factories</div></div>
+        </div>
+        <div class="wa-body">At planetary scale, ~7.5% of DPPs arrive via WhatsApp (SME factories &lt;200 employees). The remaining ~92.5% arrive via ERP direct API (SAP, Oracle, Dynamics connectors), IoT fabric sensor feeds, and EDI/AS2 B2B integrations at large factories. WhatsApp remains the critical SME channel — covering the long tail of global textile producers who cannot afford ERP systems.</div>
+        <span class="wa-chip wc-r">~72M/mo via WhatsApp</span>
+        <span class="wa-chip wc-b">~888M/mo via API/ERP</span>
+      </div>
+      <div class="wa-card">
+        <div class="wa-head">
+          <div class="wa-icon">L</div>
+          <div><div class="wa-title">Rate limit management</div><div class="wa-role">Meta API limits handled by WREB queue</div></div>
+        </div>
+        <div class="wa-body">Meta WhatsApp Business API: 1,000 messages/second per phone number. Each WREB handles up to 1,000 msg/sec = 86.4M messages/day per region. Since each DPP averages 8 WhatsApp messages (submit + OCR confirm + field corrections + approval + QR delivery + alerts), one number supports ~10.8M DPPs/day per region — far above any single regional demand. WREB queues outbound messages in Kafka to stay within Meta rate limits.</div>
+        <span class="wa-chip wc-g">~10.8M DPPs/day capacity</span>
+      </div>
+    </div>
+    <div class="wa-workaround">
+      <div class="waw-title">Complete workaround: WhatsApp → Kafka → Global Pipeline</div>
+      <div class="waw-body">
+        <strong style="color:var(--cream)">Step 1 — Regional intake:</strong> Factory supervisor sends photo to regional WREB WhatsApp number. WREB webhook (EKS pod) receives the image via Meta Cloud API.<br>
+        <strong style="color:var(--cream)">Step 2 — Edge AI processing:</strong> WREB invokes the regional IBM Granite 4.0 Micro instance (on the regional GPU cluster) for OCR and field extraction. All processing stays within the regional boundary — no raw document leaves the country.<br>
+        <strong style="color:var(--cream)">Step 3 — Structured publish:</strong> Extracted JSON (15 ESPR fields, confidence scores, document metadata) is published to the regional Kafka ingestion topic. Only structured, anonymised data flows to the global Kafka mesh.<br>
+        <strong style="color:var(--cream)">Step 4 — Global pipeline:</strong> The global VeriPass pipeline (EKS, Cassandra, Besu, CIRPASS) processes the structured record identically regardless of whether it arrived via WhatsApp, SAP ERP, or IoT sensor.<br>
+        <strong style="color:var(--cream)">Result:</strong> WhatsApp is fully retained as the SME intake channel. Factory supervisors experience no change. The WREB abstraction layer makes WhatsApp behave identically to an ERP API at the pipeline level — it is just another Kafka producer.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ARCHITECTURE LAYERS -->
+<section id="arch">
+  <div class="tag">Planetary architecture — 12 layers</div>
+  <h2>From factory floor to EU registry<br><span class="italic coral">at 5,500 DPPs/second</span></h2>
+  <div class="layers-grid">
+    <div class="layer reveal">
+      <div class="layer-num">L1 · INTAKE</div>
+      <div class="layer-icon-box">W+</div>
+      <h3>Multi-modal intake + WhatsApp WREB</h3>
+      <p>6 regional WhatsApp Edge Brokers + Kong API Gateway (100K req/sec) handling SAP/Oracle/Dynamics ERP connectors, IoT sensor feeds, EDI/AS2, REST. All converge to regional Kafka ingestion topics. No cross-region raw document transfer.</p>
+      <span class="layer-tag lt-ok">WhatsApp retained</span>
+      <span class="layer-tag lt-kafka">Kafka edge topics</span>
+    </div>
+    <div class="layer reveal reveal-d1">
+      <div class="layer-num">L2 · INGESTION AI</div>
+      <div class="layer-icon-box">G</div>
+      <h3>IBM Granite 4.0 Micro — regional inference</h3>
+      <p>On-prem IBM watsonx.ai Software Edition. Regional GPU cluster (80× H100 per region). Granite 4.0 Micro fine-tuned per region × product category. vLLM PagedAttention continuous batching. 95K DPP extractions/hr per regional cluster.</p>
+      <span class="layer-tag lt-ibm">watsonx.ai Software Ed.</span>
+    </div>
+    <div class="layer reveal reveal-d2">
+      <div class="layer-num">L3 · COMPLIANCE AI</div>
+      <div class="layer-icon-box">G</div>
+      <h3>Granite 4.0 Small — RAG compliance</h3>
+      <p>Weaviate vector cluster (20 nodes) for ESPR/REACH corpus RAG. Live ECHA SVHC API. Granite 4.0 Small via watsonx.ai Software Edition. Product-level archetype compliance cache (95% hit rate). IBM Instruct Lab continuous retraining from production DPPs.</p>
+      <span class="layer-tag lt-ibm">watsonx.ai + Weaviate</span>
+    </div>
+    <div class="layer reveal">
+      <div class="layer-num">L4 · SUSTAINABILITY AI</div>
+      <div class="layer-icon-box">G</div>
+      <h3>Granite 4.0 Micro — LCA at archetype scale</h3>
+      <p>10,000-archetype LCA lookup table (up from 200) in Redis cluster (50 nodes). 99% cache hit rate at global scale. Archetype expands to cover all global textile-producing countries. Novel products invoke Granite for full LCA — &lt;1% of DPPs.</p>
+      <span class="layer-tag lt-ibm">IBM Granite · Redis cluster</span>
+    </div>
+    <div class="layer reveal reveal-d1">
+      <div class="layer-num">L5 · ORCHESTRATION</div>
+      <div class="layer-icon-box">◈</div>
+      <h3>Granite 4.0 H-Small — global orchestrator</h3>
+      <p>Stateless orchestrator pods (EKS HPA). DPP state machine in Cassandra (not PostgreSQL). Kafka Streams for pipeline DAG orchestration. IBM watsonx.ai Orchestrate integration for governance. Quality gate: auto-pass at &gt;95% confidence, human review queue for edge cases.</p>
+      <span class="layer-tag lt-ibm">IBM watsonx Orchestrate</span>
+      <span class="layer-tag lt-kafka">Kafka Streams DAG</span>
+    </div>
+    <div class="layer reveal reveal-d2">
+      <div class="layer-num">L6 · IDENTITY</div>
+      <div class="layer-icon-box">did</div>
+      <h3>did:web + did:ethr + VC federation</h3>
+      <p>did:web (DNS-anchored) for large manufacturers — zero on-chain cost. did:ethr on L2 rollup for SMEs. Universal DID Resolver deployed per region. Accredited VC issuers (GOTS, OEKO-TEX, BCI) operate their own DID nodes — LLL no longer in VC issuance path at planetary scale.</p>
+      <span class="layer-tag lt-new">eIDAS 2.0 · W3C DID federation</span>
+    </div>
+    <div class="layer reveal">
+      <div class="layer-num">L7 · BLOCKCHAIN L1</div>
+      <div class="layer-icon-box">⬡</div>
+      <h3>32-shard Hyperledger Besu QBFT network</h3>
+      <p>32 parallel Besu chains partitioned by HS code prefix (product category). Each shard: 4 QBFT validators + 2 observers. Cross-shard bridges for multi-category DPPs. FireFly cluster per shard — routes DPPs to correct shard by HS code. 19,200 tx/sec aggregate L1 throughput.</p>
+      <span class="layer-tag lt-hl">FireFly + Besu · 32 shards</span>
+    </div>
+    <div class="layer reveal reveal-d1">
+      <div class="layer-num">L8 · BLOCKCHAIN L2</div>
+      <div class="layer-icon-box">L2</div>
+      <h3>Optimistic Rollup on each Besu shard</h3>
+      <p>Arbitrum Nitro-based Optimistic Rollup deployed on each of 32 shards. DPP creation/updates on L2 at 2,000 tx/sec per rollup. Batches 10,000 DPP anchors → 1 L1 transaction every 10 min. Pedersen commitments maintained. ERC-721 minted on L2, anchored to L1. Effective DPP throughput: ~unlimited.</p>
+      <span class="layer-tag lt-changed">NEW: L2 Rollup</span>
+    </div>
+    <div class="layer reveal reveal-d2">
+      <div class="layer-num">L9 · ZK PROOFS</div>
+      <div class="layer-icon-box">ZK</div>
+      <h3>Plonky2 recursive STARKs — archetype proofs</h3>
+      <p>One recursive STARK proof per product archetype per 4-hour batch — covers all DPPs of same archetype. 10,000 archetypes × 6 batches/day = 60,000 proofs/month (down from 350M). Each DPP carries archetype_proof_id + position. Verification on Besu L1. Compute: 200× A100 GPU cluster. 17,500× reduction in proof compute.</p>
+      <span class="layer-tag lt-changed">NEW: Plonky2 recursive</span>
+    </div>
+    <div class="layer reveal">
+      <div class="layer-num">L10 · DATA</div>
+      <div class="layer-icon-box">DB</div>
+      <h3>Cassandra global ring + Weaviate + IBM Db2</h3>
+      <p>Apache Cassandra 50-node global ring: DPP state machine (1M+ writes/sec). Weaviate 20-node cluster: vector RAG (100B+ vectors). IBM Db2 Event Store: compliance audit log (append-only, regulatory hold). Redis 50-node cluster: LCA + ZK proof cache. Apache Iceberg on S3 for petabyte analytics.</p>
+      <span class="layer-tag lt-ibm">IBM Db2 Event Store</span>
+      <span class="layer-tag lt-changed">Cassandra replaces PostgreSQL</span>
+    </div>
+    <div class="layer reveal reveal-d1">
+      <div class="layer-num">L11 · COMPUTE</div>
+      <div class="layer-icon-box">K8</div>
+      <h3>EKS Kubernetes (6 regions) + Kafka global mesh</h3>
+      <p>6 EKS clusters (500–2,000 Graviton4 nodes each). HPA per agent microservice. Apache Kafka (MSK) global event mesh — regional topics replicate structured JSON globally. Karpenter for cost-optimised Spot selection. Lambda retired for all high-throughput paths; retained for low-frequency CIRPASS adapter ops only.</p>
+      <span class="layer-tag lt-kafka">Kafka replaces SQS/Lambda</span>
+      <span class="layer-tag lt-changed">EKS replaces Lambda</span>
+    </div>
+    <div class="layer reveal reveal-d2">
+      <div class="layer-num">L12 · REGISTRATION</div>
+      <div class="layer-icon-box">🇪🇺</div>
+      <h3>LLL as CIRPASS Authorised Registration Node</h3>
+      <p>LLL operates CIRPASS ARN. Batched Merkle root synchronisation to EU central registry every 15 minutes. EU customs validates against LLL's Besu node directly. CIRPASS receives root hashes of batches — not individual DPPs. GS1 Digital Link QR codes issued by regional WREB immediately after L2 confirmation.</p>
+      <span class="layer-tag lt-new">CIRPASS ARN · Policy + IBM</span>
+    </div>
+  </div>
+</section>
+
+<!-- FULL STACK TABLE -->
+<div id="stack-table">
+  <div class="inner">
+    <div class="tag">Complete planetary stack</div>
+    <h2>Every component <span class="italic coral">redesigned for scale</span></h2>
+    <div class="tbl-wrap">
+      <div class="tbl-h"><span>Component</span><span>Planetary role + change from v3.0</span><span>IBM aligned?</span><span>Cost/DPP</span></div>
+
+      <div class="tbl-r reveal">
+        <div><div class="tc">IBM watsonx.ai Software Ed.</div><div class="ts">On-prem · 500× H100 GPU</div></div>
+        <div class="tw"><strong style="color:var(--cream)">Changed from:</strong> SaaS API per-token billing. <strong style="color:var(--cream)">Now:</strong> IBM watsonx.ai deployed as software on 500× H100 SXM5 GPUs across 6 regional data centres. Enterprise software license replaces per-token cost. Granite 4.0 Micro/Small/H-Small all run on-prem. IBM Instruct Lab for continuous fine-tuning from production DPP data. Maintains IBM Partner Plus Gold/Platinum validity — software license counts toward IBM revenue threshold.</div>
+        <div><span class="chip ci">Core IBM AI</span></div>
+        <div class="tv tvg">₹1.25</div>
+      </div>
+
+      <div class="tbl-r reveal">
+        <div><div class="tc">WhatsApp WREB</div><div class="ts">6 regional brokers · Meta API</div></div>
+        <div class="tw"><strong style="color:var(--cream)">RETAINED — not replaced.</strong> WhatsApp Business API kept for SME intake globally. 6 regional WhatsApp Edge Brokers (EKS pods) — one per AWS region — each with a dedicated regional phone number. Raw documents processed within regional boundary. Only structured JSON crosses regions. Meta API rate limit: 1,000 msg/sec per number = 86.4M msg/day = ~10.8M DPPs/day per regional broker.</div>
+        <div><span class="chip co">SME channel</span></div>
+        <div class="tv tvg">₹0.18</div>
+      </div>
+
+      <div class="tbl-r reveal">
+        <div><div class="tc">Kong API Gateway</div><div class="ts">Global · 100K req/sec</div></div>
+        <div class="tw"><strong style="color:var(--cream)">New component.</strong> Kong Gateway cluster (50 nodes) handling all non-WhatsApp intake: SAP S/4HANA connector, Oracle SCM connector, MS Dynamics connector, IoT fabric sensor REST API, EDI/AS2 B2B gateway. Handles 100K+ requests/sec with rate limiting, authentication (API keys + OAuth2), and routing to correct regional Kafka ingestion topic based on manufacturer country code.</div>
+        <div><span class="chip co">Neutral</span></div>
+        <div class="tv tvg">₹0.12</div>
+      </div>
+
+      <div class="tbl-r reveal">
+        <div><div class="tc">Apache Kafka (MSK)</div><div class="ts">Global event mesh · replaces SQS</div></div>
+        <div class="tw"><strong style="color:var(--cream)">Changed from:</strong> AWS SQS FIFO per-queue. <strong style="color:var(--cream)">Now:</strong> Apache Kafka global mesh (Amazon MSK) — regional topics (raw-docs-in, extracted-fields, compliance-results, dpp-anchored, cirpass-registered) replicated via MirrorMaker2 to other regions. 1M+ messages/second per cluster. Guaranteed delivery + replay. Kafka Streams handles pipeline DAG orchestration, replacing Lambda step-function logic.</div>
+        <div><span class="chip ck">Kafka mesh</span></div>
+        <div class="tv tvg">₹0.22</div>
+      </div>
+
+      <div class="tbl-r reveal">
+        <div><div class="tc">Amazon EKS Kubernetes</div><div class="ts">6 regions · Graviton4 Spot</div></div>
+        <div class="tw"><strong style="color:var(--cream)">Changed from:</strong> AWS Lambda + SQS batches. <strong style="color:var(--cream)">Now:</strong> 6 EKS clusters (one per region), each 500–2,000 ARM Graviton4 Spot nodes. HPA per agent microservice. Karpenter for dynamic Spot selection. Lambda retired from all high-throughput agent paths — retained only for CIRPASS batch sync and low-frequency admin operations. EKS cost at scale: ~$4M/month vs $500M+ for Lambda equivalent.</div>
+        <div><span class="chip co">Neutral</span></div>
+        <div class="tv tvg">₹0.33</div>
+      </div>
+
+      <div class="tbl-r reveal">
+        <div><div class="tc">Hyperledger FireFly (clustered)</div><div class="ts">50–100 instances per shard</div></div>
+        <div class="tw"><strong style="color:var(--cream)">Changed from:</strong> Single FireFly supernode. <strong style="color:var(--cream)">Now:</strong> 50–100 FireFly instances per Besu shard, behind Kong load balancer. Each FireFly instance handles ~100 req/sec. Shard routing by HS code prefix: FireFly routes DPPs to correct shard automatically. FireFly's event bus upgraded to Kafka — replaces internal WebSocket for planetary-scale event streaming. Maintained as IBM-affiliated Hyperledger component.</div>
+        <div><span class="chip ch">IBM HL · clustered</span></div>
+        <div class="tv tvg">₹0.04</div>
+      </div>
+
+      <div class="tbl-r reveal">
+        <div><div class="tc">32-shard Besu QBFT + L2 Rollup</div><div class="ts">19,200 tx/sec L1 + unlimited L2</div></div>
+        <div class="tw"><strong style="color:var(--cream)">Changed from:</strong> Single Besu chain, 4 validators. <strong style="color:var(--cream)">Now:</strong> 32 parallel Besu chains partitioned by HS code prefix. Each shard: QBFT consensus, ~600 tx/sec. Arbitrum Nitro-based Optimistic Rollup L2 on each shard: 2,000 tx/sec per rollup, batches 10,000 DPPs → 1 L1 tx every 10 min. State channels still active for high-frequency manufacturers (L3). Pedersen commitments maintained throughout. ERC-721 on L2, anchored L1.</div>
+        <div><span class="chip ch">IBM HL · sharded</span></div>
+        <div class="tv tvg">₹0.29</div>
+      </div>
+
+      <div class="tbl-r reveal">
+        <div><div class="tc">Plonky2 recursive STARKs</div><div class="ts">Replaces Groth16 per-DPP proofs</div></div>
+        <div class="tw"><strong style="color:var(--cream)">Changed from:</strong> Groth16/PLONK per-DPP ZK proofs (350M fresh proofs/month). <strong style="color:var(--cream)">Now:</strong> Plonky2 recursive STARK proofs generated per product archetype per 4-hour batch. One proof covers all DPPs of the same product type in the batch window. 10,000 archetypes × 6 batches/day = 60,000 proofs/month. 200× A100 GPU cluster. 17,500× reduction in proof compute. Verification on Besu L1 — single STARK verifier per archetype.</div>
+        <div><span class="chip cn">Plonky2 · new</span></div>
+        <div class="tv tvg">₹0.08</div>
+      </div>
+
+      <div class="tbl-r reveal">
+        <div><div class="tc">Apache Cassandra (global ring)</div><div class="ts">50-node ring · replaces PostgreSQL</div></div>
+        <div class="tw"><strong style="color:var(--cream)">Changed from:</strong> PostgreSQL RDS t3.medium → r6g.xlarge. <strong style="color:var(--cream)">Now:</strong> Apache Cassandra 50-node global ring. Partition key: manufacturer_did + product_category. LOCAL_QUORUM writes (2 local nodes, async global replication). Handles 1M+ writes/sec. Linear scaling — add nodes, get proportional throughput. DPP state machine, supplier profiles, compliance results, cert tracking all in Cassandra.</div>
+        <div><span class="chip co">Neutral · Cassandra</span></div>
+        <div class="tv tvg">₹0.21</div>
+      </div>
+
+      <div class="tbl-r reveal">
+        <div><div class="tc">IBM Db2 Event Store</div><div class="ts">Audit log · regulatory hold</div></div>
+        <div class="tw"><strong style="color:var(--cream)">New IBM component.</strong> IBM Db2 Event Store (IBM Db2 Warehouse) for the compliance audit log — append-only, immutable, regulatory hold compliant. Every ESPR field validation, REACH check, ZK proof reference, and CIRPASS registration event written here. EU regulatory auditors access this directly. Counts toward IBM Gold/Platinum revenue threshold alongside watsonx.ai Software Edition license.</div>
+        <div><span class="chip ci">IBM Db2 · audit</span></div>
+        <div class="tv tvg">₹0.14</div>
+      </div>
+
+      <div class="tbl-r reveal">
+        <div><div class="tc">Weaviate vector cluster</div><div class="ts">20 nodes · replaces pgvector</div></div>
+        <div class="tw"><strong style="color:var(--cream)">Changed from:</strong> pgvector extension on PostgreSQL. <strong style="color:var(--cream)">Now:</strong> Weaviate distributed vector database, 20-node cluster, 100B+ vector capacity. Stores ESPR/REACH regulation embeddings, supplier document embeddings, and product archetype embeddings. Millisecond query latency at planetary scale. IBM granite-embedding-107m still used for vector generation — Weaviate only stores and retrieves them.</div>
+        <div><span class="chip ci">IBM Granite embeddings</span></div>
+        <div class="tv tvg">₹0.10</div>
+      </div>
+
+      <div class="tbl-r reveal">
+        <div><div class="tc">CIRPASS ARN adapter</div><div class="ts">LLL as Authorised Registration Node</div></div>
+        <div class="tw"><strong style="color:var(--cream)">Changed from:</strong> Per-DPP REST submission to CIRPASS. <strong style="color:var(--cream)">Now:</strong> LLL operates as CIRPASS Authorised Registration Node. Every 15 minutes, a Merkle root hash of the new DPP batch is submitted to EU CIRPASS central registry — not individual DPPs. EU customs validates against LLL's Besu node directly. Policy negotiation required; IBM Partner Plus Gold/Platinum status + IBM EU relationships are the strategic enablers.</div>
+        <div><span class="chip cn">LLL as CIRPASS ARN</span></div>
+        <div class="tv tvg">₹0.08</div>
+      </div>
+
+      <div class="tbl-r reveal">
+        <div><div class="tc">S3 + Filecoin + IPFS cluster</div><div class="ts">50TB new data/month</div></div>
+        <div class="tw">S3 Intelligent-Tiering for hot/warm DPP blobs. Filecoin for permanent decentralised archival (DPPs must be retrievable for 10+ years under EU ESPR). IPFS cluster (100+ nodes globally) for off-chain JSON-LD. Content addressing: identical supplier docs across millions of DPPs share one CID — effective storage ~30% of raw 50TB/month. Apache Iceberg on S3 for petabyte-scale analytical queries across the global DPP corpus.</div>
+        <div><span class="chip co">Neutral · distributed</span></div>
+        <div class="tv tvg">₹0.25</div>
+      </div>
+
+      <div class="tbl-r reveal">
+        <div><div class="tc">did:web + did:ethr + VC federation</div><div class="ts">W3C DID at planetary scale</div></div>
+        <div class="tw"><strong style="color:var(--cream)">Changed from:</strong> did:ethr on single Besu chain for all manufacturers. <strong style="color:var(--cream)">Now:</strong> did:web (DNS-anchored) for large manufacturers — zero on-chain cost, resolved via HTTPS. did:ethr on L2 rollup for SMEs — minimal gas cost. Accredited VC issuers (GOTS, OEKO-TEX, BCI, SA8000) run their own DID issuance nodes; LLL is no longer in the VC issuance path. Universal Resolver deployed per region.</div>
+        <div><span class="chip co">W3C · federated</span></div>
+        <div class="tv tvg">₹0.04</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- VOLUME METRICS -->
+<section id="volume">
+  <div class="tag">Recalculated volume metrics</div>
+  <h2>Planetary Edition — <span class="italic coral">precise throughput at every layer</span></h2>
+  <div class="vm-grid">
+
+    <div class="vm-card reveal">
+      <div class="vm-layer">Global intake</div>
+      <div class="vm-val">~960M</div>
+      <div class="vm-unit">DPPs / month total</div>
+      <div class="vm-calc">6 regions × avg 160M/region/month. Weighted: India+ASEAN 60%, MENA+EU 25%, LatAm 15%. Peak region (ASEAN): ~250M/month.</div>
+    </div>
+
+    <div class="vm-card reveal reveal-d1">
+      <div class="vm-layer">WhatsApp WREB capacity</div>
+      <div class="vm-val">~72M</div>
+      <div class="vm-unit">DPPs / month via WhatsApp</div>
+      <div class="vm-calc">6 WREBs × 1,000 msg/sec/number × 86,400 sec/day × 30 days ÷ 8 messages/DPP = 194M/month max. Target utilisation 37% = 72M/month. SME channel only.</div>
+    </div>
+
+    <div class="vm-card reveal reveal-d2">
+      <div class="vm-layer">ERP / IoT / API intake</div>
+      <div class="vm-val">~888M</div>
+      <div class="vm-unit">DPPs / month via machine channels</div>
+      <div class="vm-calc">Kong Gateway: 100K req/sec × 86,400 sec/day = 8.64B requests/day capacity. DPP creation requires ~15 API calls = 576M DPPs/day theoretical max per Kong cluster. Target: 30M/day = 888M/month.</div>
+    </div>
+
+    <div class="vm-card reveal">
+      <div class="vm-layer">Kafka ingestion throughput</div>
+      <div class="vm-val">370</div>
+      <div class="vm-unit">DPP-equivalent messages/second (average)</div>
+      <div class="vm-calc">960M/month ÷ 2,592,000 sec/month = 370 avg/sec. Peak 16-hr window: 5,500/sec. Kafka MSK capacity: 1M+ msg/sec per cluster — 181× peak headroom. Not a bottleneck.</div>
+    </div>
+
+    <div class="vm-card reveal reveal-d1">
+      <div class="vm-layer">AI inference demand</div>
+      <div class="vm-val">333K</div>
+      <div class="vm-unit">DPPs processable / second (GPU cluster)</div>
+      <div class="vm-calc">500 H100 GPUs × 10,000 tokens/sec each ÷ 15,000 tokens/DPP = 333,333 DPPs/sec. Actual demand: 5,500/sec peak. GPU cluster runs at ~1.65% peak utilisation — massive headroom for bursts.</div>
+    </div>
+
+    <div class="vm-card reveal reveal-d2">
+      <div class="vm-layer">Blockchain L1 throughput</div>
+      <div class="vm-val">19,200</div>
+      <div class="vm-unit">Besu L1 transactions / second</div>
+      <div class="vm-calc">32 shards × 600 QBFT tx/sec = 19,200 tx/sec. With L2 Rollup batching 10,000 DPPs → 1 L1 tx: effective DPP throughput = 19,200 × 10,000 = 192M DPPs/sec. Blockchain is definitively not the bottleneck.</div>
+    </div>
+
+    <div class="vm-card reveal">
+      <div class="vm-layer">L2 Rollup throughput</div>
+      <div class="vm-val">64,000</div>
+      <div class="vm-unit">L2 transactions / second</div>
+      <div class="vm-calc">32 rollups × 2,000 tx/sec each = 64,000 L2 tx/sec. At 1 L2 tx per DPP: handles 5.5 billion DPPs/month at L2 level. Actual demand 960M = 17.5% L2 utilisation.</div>
+    </div>
+
+    <div class="vm-card reveal reveal-d1">
+      <div class="vm-layer">ZK proof generation</div>
+      <div class="vm-val">60K</div>
+      <div class="vm-unit">Plonky2 archetype proofs / month</div>
+      <div class="vm-calc">10,000 archetypes × 6 four-hour batches/day × 30 days = 1.8M proof slots. Active archetypes per month ~60K (60% archetype utilisation). Down from 350M Groth16 proofs/month. 200× A100 GPUs handle 60K Plonky2 proofs easily — ~30 proofs/day per GPU.</div>
+    </div>
+
+    <div class="vm-card reveal reveal-d2">
+      <div class="vm-layer">Cassandra write throughput</div>
+      <div class="vm-val">5,500</div>
+      <div class="vm-unit">DPP state writes / second (peak)</div>
+      <div class="vm-calc">Cassandra 50-node ring capacity: 1M+ writes/sec. Peak DPP demand: 5,500/sec = 0.55% of Cassandra capacity. Each DPP creates ~10 Cassandra writes = 55,000 writes/sec peak — still only 5.5% utilisation. Massive headroom.</div>
+    </div>
+
+    <div class="vm-card reveal">
+      <div class="vm-layer">CIRPASS batch sync</div>
+      <div class="vm-val">2,880</div>
+      <div class="vm-unit">Merkle root submissions / month to EU</div>
+      <div class="vm-calc">1 batch every 15 minutes × 60 min/hr × 24 hr/day × 30 days = 2,880 submissions/month. Each submission covers ~333K DPPs on average. EU CIRPASS receives 2,880 hash submissions instead of 960M individual registrations — a 333,000× reduction.</div>
+    </div>
+
+    <div class="vm-card reveal reveal-d1">
+      <div class="vm-layer">Storage growth</div>
+      <div class="vm-val">~15TB</div>
+      <div class="vm-unit">Net new storage / month (after dedup)</div>
+      <div class="vm-calc">960M DPPs × 50KB raw = 48TB/month. CID deduplication (60% doc reuse) → 19.2TB unique. Brotli compression (70% ratio on JSON-LD) → ~5.8TB compressed. IPFS + S3 Intelligent-Tiering manages this automatically. Cold DPPs &gt;90 days → Glacier at $0.004/GB/month.</div>
+    </div>
+
+    <div class="vm-card reveal reveal-d2">
+      <div class="vm-layer">End-to-end latency</div>
+      <div class="vm-val">&lt;45 sec</div>
+      <div class="vm-unit">WhatsApp submit → CIRPASS confirmed</div>
+      <div class="vm-calc">WREB OCR: 3s · Kafka propagation: &lt;1s · AI pipeline (EKS): 8s · L2 confirmation: 2s · Plonky2 proof lookup: 1s · CIRPASS batch: up to 15 min. Real-time path (GS1 QR ready): &lt;15s. CIRPASS Merkle root: next 15-min window.</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- COST -->
+<div id="cost">
+  <div class="inner">
+    <div class="tag">Cost at planetary scale</div>
+    <h2>₹3.8 / DPP at<br><span class="italic coral">960M DPPs/month</span></h2>
+    <div class="cost-grid">
+      <div class="cost-panel reveal">
+        <div class="cp-title">Per-DPP cost breakdown</div>
+        <div class="cr"><span class="cr-name">IBM watsonx.ai Software Ed. (amortised)</span><div class="cr-bar"><div class="cr-fill" style="width:33%"></div></div><span class="cr-val" style="color:var(--ibm2)">₹1.25</span></div>
+        <div class="cr"><span class="cr-name">EKS Kubernetes (6 regions, Graviton4)</span><div class="cr-bar"><div class="cr-fill" style="width:9%"></div></div><span class="cr-val" style="color:var(--green2)">₹0.33</span></div>
+        <div class="cr"><span class="cr-name">Cassandra + Weaviate + IBM Db2</span><div class="cr-bar"><div class="cr-fill" style="width:12%"></div></div><span class="cr-val" style="color:var(--green2)">₹0.45</span></div>
+        <div class="cr"><span class="cr-name">32-shard Besu L1 + L2 Rollup nodes</span><div class="cr-bar"><div class="cr-fill" style="width:8%"></div></div><span class="cr-val" style="color:var(--green2)">₹0.29</span></div>
+        <div class="cr"><span class="cr-name">Kafka global mesh (MSK)</span><div class="cr-bar"><div class="cr-fill" style="width:6%"></div></div><span class="cr-val" style="color:var(--green2)">₹0.22</span></div>
+        <div class="cr"><span class="cr-name">Plonky2 ZK proof compute (A100)</span><div class="cr-bar"><div class="cr-fill" style="width:2%"></div></div><span class="cr-val" style="color:var(--green2)">₹0.08</span></div>
+        <div class="cr"><span class="cr-name">WhatsApp WREB (6 regional brokers)</span><div class="cr-bar"><div class="cr-fill" style="width:5%"></div></div><span class="cr-val" style="color:var(--green2)">₹0.18</span></div>
+        <div class="cr"><span class="cr-name">Kong gateway + network egress</span><div class="cr-bar"><div class="cr-fill" style="width:3%"></div></div><span class="cr-val" style="color:var(--green2)">₹0.12</span></div>
+        <div class="cr"><span class="cr-name">S3 + IPFS + Filecoin storage</span><div class="cr-bar"><div class="cr-fill" style="width:7%"></div></div><span class="cr-val" style="color:var(--green2)">₹0.25</span></div>
+        <div class="cr"><span class="cr-name">CIRPASS ARN + GS1 QR operations</span><div class="cr-bar"><div class="cr-fill" style="width:2%"></div></div><span class="cr-val" style="color:var(--green2)">₹0.08</span></div>
+        <div class="cr"><span class="cr-name">DID federation + VC operations</span><div class="cr-bar"><div class="cr-fill" style="width:1%"></div></div><span class="cr-val" style="color:var(--green2)">₹0.05</span></div>
+        <div class="cr"><span class="cr-name">Misc (monitoring, support, ops)</span><div class="cr-bar"><div class="cr-fill" style="width:2%"></div></div><span class="cr-val" style="color:var(--green2)">₹0.10</span></div>
+        <div class="cost-total">
+          <div><div class="ct-label">Total cost / DPP</div><div class="ct-sub">960M DPPs/month · 6 regions</div></div>
+          <div class="ct-val">₹3.8</div>
+        </div>
+      </div>
+      <div class="cost-panel reveal reveal-d1">
+        <div class="cp-title">Cost vs v3.0 design comparison</div>
+        <div class="cr"><span class="cr-name">MVP pilot (300/mo, 3 exporters)</span><div class="cr-bar"><div class="cr-fill" style="width:100%;background:#DA1E28"></div></div><span class="cr-val" style="color:#FF8389">₹120</span></div>
+        <div class="cr"><span class="cr-name">v1.0 (2,000/mo, 20 exporters)</span><div class="cr-bar"><div class="cr-fill" style="width:25%"></div></div><span class="cr-val" style="color:var(--gold)">₹30</span></div>
+        <div class="cr"><span class="cr-name">v2.0 (10,000/mo, 50 exporters)</span><div class="cr-bar"><div class="cr-fill" style="width:15%"></div></div><span class="cr-val" style="color:var(--green2)">₹18</span></div>
+        <div class="cr"><span class="cr-name">v3.0 (40,000/mo, 200 exporters)</span><div class="cr-bar"><div class="cr-fill" style="width:9%"></div></div><span class="cr-val" style="color:var(--green2)">₹11</span></div>
+        <div class="cr"><span class="cr-name">Planetary Phase 1 (1M/mo)</span><div class="cr-bar"><div class="cr-fill" style="width:6%"></div></div><span class="cr-val" style="color:var(--green2)">₹8</span></div>
+        <div class="cr"><span class="cr-name">Planetary Phase 2 (100M/mo)</span><div class="cr-bar"><div class="cr-fill" style="width:4%"></div></div><span class="cr-val" style="color:var(--green2)">₹5</span></div>
+        <div class="cr"><span class="cr-name">Planetary Phase 3 (~960M/mo)</span><div class="cr-bar"><div class="cr-fill" style="width:3%"></div></div><span class="cr-val" style="color:var(--coral)">₹3.8</span></div>
+        <div class="cost-total" style="margin-top:14px">
+          <div><div class="ct-label">Monthly infrastructure cost</div><div class="ct-sub">960M DPPs · $46M/month total</div></div>
+          <div class="ct-val" style="font-size:1.4rem">$46M</div>
+        </div>
+        <div class="note" style="margin-top:12px;margin-bottom:0"><strong>Revenue at ₹10/DPP:</strong> 960M × ₹10 = ₹9,600 crore/month = ₹1.15 lakh crore ARR ($1.34B USD). LLL becomes a global digital trade infrastructure company.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MIGRATION -->
+<section id="migration">
+  <div class="tag">Migration path · 36 months</div>
+  <h2>v3.0 Tiruppur → Planetary Edition<br><span class="italic coral">three phases, each self-funding</span></h2>
+  <div class="mig-strip">
+    <div class="mig-col reveal">
+      <div class="mig-hdr">
+        <div class="mig-phase" style="color:#F1C21B">Phase P1 · Months 25–30</div>
+        <div class="mig-title">Regional scale-out</div>
+        <div class="mig-period">120K → 1M DPPs/month</div>
+        <div class="mig-kpis">
+          <div class="mk"><div class="mk-v" style="color:#F1C21B">₹8</div><div class="mk-l">/DPP</div></div>
+          <div class="mk"><div class="mk-v" style="color:#F1C21B">1M</div><div class="mk-l">DPPs/mo</div></div>
+        </div>
+      </div>
+      <div class="mig-body">
+        <div class="mig-section-label" style="color:#009D9A">Infrastructure</div>
+        <ul class="mig-items">
+          <li>PostgreSQL → CockroachDB (distributed SQL, drop-in replacement)</li>
+          <li>Lambda → EKS single-region (Mumbai)</li>
+          <li>SQS → Apache Kafka (MSK single region)</li>
+          <li>Add 3 H100 GPUs for AI inference (total 4)</li>
+          <li>Besu: 1 chain → 4 shards</li>
+          <li>Deploy WhatsApp WREB for Mumbai region</li>
+        </ul>
+        <div class="mig-section-label" style="color:#4589FF">Intake</div>
+        <ul class="mig-items">
+          <li>Kong API Gateway deployed (ERP connectors v1)</li>
+          <li>SAP S/4HANA + Oracle SCM connectors live</li>
+          <li>WhatsApp WREB India operational</li>
+        </ul>
+        <div class="mig-section-label" style="color:#42BE65">Business</div>
+        <ul class="mig-items">
+          <li>Expand beyond Tiruppur: Ludhiana + Surat onboarded</li>
+          <li>IBM Partner Plus Gold achieved (USD 100K revenue)</li>
+        </ul>
+      </div>
+      <div class="mig-footer"><span class="mig-ibm-badge" style="background:rgba(66,190,101,.15);color:#42BE65;border:.5px solid rgba(66,190,101,.3)">IBM Partner Plus: Gold</span></div>
+    </div>
+    <div class="mig-col reveal reveal-d1">
+      <div class="mig-hdr">
+        <div class="mig-phase" style="color:#42BE65">Phase P2 · Months 31–42</div>
+        <div class="mig-title">Global deployment</div>
+        <div class="mig-period">1M → 100M DPPs/month</div>
+        <div class="mig-kpis">
+          <div class="mk"><div class="mk-v" style="color:#42BE65">₹5</div><div class="mk-l">/DPP</div></div>
+          <div class="mk"><div class="mk-v" style="color:#42BE65">100M</div><div class="mk-l">DPPs/mo</div></div>
+        </div>
+      </div>
+      <div class="mig-body">
+        <div class="mig-section-label" style="color:#009D9A">Infrastructure</div>
+        <ul class="mig-items">
+          <li>CockroachDB → Apache Cassandra global ring (50 nodes)</li>
+          <li>EKS expanded to 5 regions (+ Singapore, Frankfurt, Bahrain, São Paulo)</li>
+          <li>Kafka global mesh (MirrorMaker2 cross-region replication)</li>
+          <li>GPU cluster: 50× H100 (vLLM shared inference)</li>
+          <li>Besu: 4 → 16 shards; Optimistic Rollup L2 deployed</li>
+          <li>Groth16 → Plonky2 recursive STARKs</li>
+          <li>IBM watsonx.ai Software Edition license begins</li>
+          <li>pgvector → Weaviate vector cluster (20 nodes)</li>
+        </ul>
+        <div class="mig-section-label" style="color:#4589FF">Intake</div>
+        <ul class="mig-items">
+          <li>WhatsApp WREBs deployed in all 6 regions</li>
+          <li>did:web federation for large manufacturers</li>
+          <li>Accredited VC issuer nodes (GOTS, OEKO-TEX) live</li>
+        </ul>
+        <div class="mig-section-label" style="color:#42BE65">CIRPASS</div>
+        <ul class="mig-items">
+          <li>Apply for CIRPASS ARN status with EU Commission</li>
+          <li>IBM relationship leveraged for EU policy engagement</li>
+          <li>CIRPASS batched Merkle sync in testing</li>
+        </ul>
+      </div>
+      <div class="mig-footer"><span class="mig-ibm-badge" style="background:rgba(66,190,101,.15);color:#42BE65;border:.5px solid rgba(66,190,101,.3)">IBM Partner Plus: Gold → Platinum</span></div>
+    </div>
+    <div class="mig-col reveal reveal-d2">
+      <div class="mig-hdr">
+        <div class="mig-phase" style="color:var(--coral)">Phase P3 · Months 43–60</div>
+        <div class="mig-title">Planetary full deployment</div>
+        <div class="mig-period">100M → ~960M DPPs/month</div>
+        <div class="mig-kpis">
+          <div class="mk"><div class="mk-v" style="color:var(--coral)">₹3.8</div><div class="mk-l">/DPP</div></div>
+          <div class="mk"><div class="mk-v" style="color:var(--coral)">~960M</div><div class="mk-l">DPPs/mo</div></div>
+        </div>
+      </div>
+      <div class="mig-body">
+        <div class="mig-section-label" style="color:#009D9A">Infrastructure</div>
+        <ul class="mig-items">
+          <li>Besu: 16 → 32 shards fully operational</li>
+          <li>GPU cluster: 50 → 500× H100 (IBM watsonx.ai on-prem)</li>
+          <li>IBM Db2 Event Store live for compliance audit log</li>
+          <li>Apache Iceberg petabyte analytics layer on S3</li>
+          <li>Filecoin archival for permanent DPP storage (&gt;10 yr)</li>
+          <li>State channels L3 for top-1000 manufacturers</li>
+        </ul>
+        <div class="mig-section-label" style="color:#4589FF">Intake</div>
+        <ul class="mig-items">
+          <li>IoT fabric sensor API (EKS endpoint, direct L2 anchor)</li>
+          <li>EDI/AS2 gateway for major retailers (H&M, Zara, M&S)</li>
+          <li>WhatsApp WREBs scaled to handle 12M DPPs/month/region</li>
+        </ul>
+        <div class="mig-section-label" style="color:#42BE65">CIRPASS + IBM</div>
+        <ul class="mig-items">
+          <li>CIRPASS ARN live — LLL is EU-authorised DPP registrar</li>
+          <li>IBM Partner Plus Platinum (USD 1M+ IBM revenue)</li>
+          <li>IBM Think showcase: LLL as flagship global ISV</li>
+          <li>VeriPass white-labelled to ASEAN, MENA, LatAm clusters</li>
+        </ul>
+      </div>
+      <div class="mig-footer"><span class="mig-ibm-badge" style="background:rgba(255,131,43,.15);color:var(--coral);border:.5px solid rgba(255,131,43,.3)">IBM Partner Plus: Platinum ✓</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div class="fb">Veri<span>Pass</span> Planetary Edition</div>
+    <div class="fr" style="margin-top:5px">Lattice Ledger Labs Private Limited · Tiruppur, Tamil Nadu · Architecture v4.0 · April 2025</div>
+  </div>
+  <div class="fl">
+    <a href="#whatsapp">WhatsApp</a><a href="#arch">Architecture</a>
+    <a href="#stack-table">Stack</a><a href="#volume">Volume</a>
+    <a href="#cost">Cost</a><a href="#migration">Migration</a>
+  </div>
+  <div class="fr">
+    IBM watsonx.ai Software Edition · Hyperledger FireFly · Besu · 32-shard QBFT<br>
+    Plonky2 STARKs · Apache Kafka · Cassandra · CIRPASS ARN · EU ESPR 2024/1781
+  </div>
+</footer>
+
+<script>
+const io=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('visible')})},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+const sects=document.querySelectorAll('[id]');
+const navs=document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  sects.forEach(s=>{if(window.scrollY>=s.offsetTop-140)cur=s.id});
+  navs.forEach(a=>{a.style.color=a.getAttribute('href')==='#'+cur?'var(--coral)':''});
+});
+</script>
+</body>
+</html>
